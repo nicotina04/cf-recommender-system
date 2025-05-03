@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# json from codeforces API
+response_cache/
+
+# processed data from raw json
+processed_data/
