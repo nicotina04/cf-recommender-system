@@ -1,6 +1,5 @@
-import pandas as pd
-from config import PROCESSED_BASENAME
-import storage
+from cf_data_pipeline.config import PROCESSED_DATA_DIR
+from cf_data_pipeline import storage
 
 
 def get_division_type(title: str) -> int:
@@ -20,7 +19,8 @@ def get_division_type(title: str) -> int:
     return 5  # special name (actually tag to div.1 + div.2)
 
 def get_tag_group_map():
-    df = storage.load_csv(f'./{PROCESSED_BASENAME}/tag_group_map.csv')
+    csv_path = PROCESSED_DATA_DIR / 'tag_group_map.csv'
+    df = storage.load_csv(csv_path)
     return df.set_index('tag')['groups'].to_dict()
 
 def normalize_tags(raw_tags: list[str], tag_map: dict[str, str]) -> list[str]:

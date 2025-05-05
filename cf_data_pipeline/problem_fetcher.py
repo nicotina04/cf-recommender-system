@@ -1,9 +1,9 @@
 import time
-from api_client import get_contest_standings
-from contest_fetcher import get_rated_contest_df
-from preprocess import get_tag_group_map, normalize_tags
-from storage import save_json, load_json
-from config import PROCESSED_BASENAME, CONTEST_PROBLEMS_BASENAME, SLEEP_TIME
+from cf_data_pipeline.api_client import get_contest_standings
+from cf_data_pipeline.contest_fetcher import get_rated_contest_df
+from cf_data_pipeline.preprocess import get_tag_group_map, normalize_tags
+from cf_data_pipeline.storage import save_json, load_json
+from cf_data_pipeline.config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME, SLEEP_TIME
 
 
 def process_contest_problem_metadata():
@@ -39,7 +39,7 @@ def process_contest_problem_metadata():
 
         time.sleep(SLEEP_TIME)
 
-    save_path = f'./{PROCESSED_BASENAME}/{CONTEST_PROBLEMS_BASENAME}.json'
+    save_path = PROCESSED_DATA_DIR / f'{CONTEST_PROBLEMS_BASENAME}.json'
     save_json(save_path, records)
     print(f"[Done] {len(records)} problems saved.")
     print(f"[Failed] {len(failed_ids)} contests")

@@ -12,7 +12,7 @@ from cf_data_pipeline.config import *
 from cf_data_pipeline import preprocess
 
 def get_tag_group_map():
-    df = pd.read_csv(f'./{PROCESSED_BASENAME}/tag_group_map.csv')
+    df = pd.read_csv(PROCESSED_DATA_DIR / 'tag_group_map.csv')
     return df.set_index('tag')['groups'].to_dict()
 
 def get_contest_list(cache_path = f'./{RES_CACHE_BASENAME}/contest_list.json'):

@@ -1,9 +1,9 @@
 import requests
 import os
 import json
-import pandas as pd
+import time
 from typing import Optional
-from config import *
+from cf_data_pipeline.config import *
 
 
 def get_json(url: str, api_timeout: float = 10) -> Optional[dict]:
@@ -17,6 +17,19 @@ def get_json(url: str, api_timeout: float = 10) -> Optional[dict]:
     except Exception as e:
         print(f'[API ERROR] {url} -> {e}')
         return None
+    
+def safe_get_json(url: str, api_timeout, max_retries=5):
+    for i in range(max_retries):
+        res = get_json(url, api_timeout=api_timeout)
+        if res is None:
+            continue
+        if res.get('status') == 'OK':
+            return res
+        elif "Call limit exceeded" in res.get("comment", ""):
+            time.sleep(SLEEP_TIME)
+        else:
+            return None
+    return None
 
 def get_contest_list(cache_path = f'./{RES_CACHE_BASENAME}/contest_list.json') -> Optional[dict]:
     if os.path.isfile(cache_path) is True:

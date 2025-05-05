@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
 
@@ -7,4 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "cf_data_pipeline/run_pipeline.py"]
+WORKDIR /app/cf_data_pipeline
+RUN ln -sf /usr/local/bin/python3 /usr/local/bin/python
+
+CMD ["python", "run_pipeline.py"]

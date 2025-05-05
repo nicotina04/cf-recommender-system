@@ -1,10 +1,10 @@
 import pandas as pd
 from datetime import datetime
-from api_client import get_contest_list, get_json
-from storage import save_csv, load_csv
-from config import PROCESSED_BASENAME, RATED_CONTEST_METADATA_BASENAME, SLEEP_TIME
-from preprocess import get_division_type
 import time
+from cf_data_pipeline.api_client import get_contest_list, safe_get_json
+from cf_data_pipeline.storage import save_csv, load_csv
+from cf_data_pipeline.config import PROCESSED_DATA_DIR, RATED_CONTEST_METADATA_BASENAME, SLEEP_TIME
+from cf_data_pipeline.preprocess import get_division_type
 
 
 def process_rated_contest_csv(min_date: str, max_date: str):
@@ -36,12 +36,12 @@ def process_rated_contest_csv(min_date: str, max_date: str):
         time.sleep(SLEEP_TIME)
 
     df = pd.DataFrame(result)
-    save_path = f'./{PROCESSED_BASENAME}/{RATED_CONTEST_METADATA_BASENAME}.csv'
+    save_path = PROCESSED_DATA_DIR / f'{RATED_CONTEST_METADATA_BASENAME}.csv'
     save_csv(save_path, df)
     print(f"{len(df)} contests saved.")
 
 def get_rated_contest_df() -> pd.DataFrame:
-    path = f'./{PROCESSED_BASENAME}/{RATED_CONTEST_METADATA_BASENAME}.csv'
+    path = PROCESSED_DATA_DIR / f'{RATED_CONTEST_METADATA_BASENAME}.csv'
     df = load_csv(path)
     if df is None:
         print("Contest metadata not found. Fetching from API...")
@@ -78,7 +78,7 @@ def retry_failed_contests(failed_ids: list[int], existing_csv_path: str, save_cs
 
     for cid in ids_to_retry:
         url = f'{base_url}{cid}'
-        res = get_json(url, api_timeout=15)
+        res = safe_get_json(url, api_timeout=15)
         if res is None or res.get('status') != 'OK' or not res.get('result'):
             print(f"[Retry Failed] Contest {cid} fetch failed or empty.")
             continue

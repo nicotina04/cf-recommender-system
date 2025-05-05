@@ -1,10 +1,12 @@
 import pandas as pd
-import api_client
-from config import PROCESSED_BASENAME
-from storage import load_csv, save_csv
+from typing import Union
+from pathlib import Path
+from cf_data_pipeline import api_client
+from cf_data_pipeline.config import PROCESSED_DATA_DIR
+from cf_data_pipeline.storage import load_csv, save_csv
 
 
-def get_cf_handles(csv_path: str = f'./{PROCESSED_BASENAME}/selected_users.csv') -> list[str]:
+def get_cf_handles(csv_path: Union[str, Path] = PROCESSED_DATA_DIR / f'selected_users.csv') -> list[str]:
     df = load_csv(csv_path)
     if df is not None:
         if 'handle' not in df.columns:
