@@ -1,9 +1,9 @@
 from user_fetcher import get_cf_handles
-from cf_data_pipeline.contest_fetcher import process_rated_contest_csv, get_rated_contest_df
-from cf_data_pipeline.problem_fetcher import process_contest_problem_metadata, retry_failed_problems
-from cf_data_pipeline.user_selector import stratified_sample_by_rating
-from cf_data_pipeline.extract_participant_handles import extract_handles_from_contests
-from cf_data_pipeline import storage
+from contest_fetcher import process_rated_contest_csv, get_rated_contest_df
+from problem_fetcher import process_contest_problem_metadata, retry_failed_problems
+from user_selector import stratified_sample_by_rating
+from extract_participant_handles import extract_handles_from_contests
+import storage
 from config import PROCESSED_DATA_DIR, SLEEP_TIME
 
 def run_all():
@@ -13,8 +13,8 @@ def run_all():
     # print("Step 2: Fetching contest metadata...")
     # process_rated_contest_csv("2020-01-01", "2025-03-01")
 
-    # print("Step 3: Fetching contest problem metadata...")
-    # process_contest_problem_metadata()
+    print("Step 3: Fetching contest problem metadata...")
+    process_contest_problem_metadata()
 
     # Optional: retry logic (if you want to)
     # retry_failed_problems([1234, 5678], '...', '...')
@@ -43,27 +43,27 @@ def run_all():
     # extract_handles_from_contests(df['contest_id'].tolist())
 
     """Fetch and store user's contest rating"""
-    import db_rating_change
-    db_rating_change.init_db()
+    # import db_rating_change
+    # db_rating_change.init_db()
 
-    import rating_change_fetcher
-    import time
+    # import rating_change_fetcher
+    # import time
     
-    handle_path = PROCESSED_DATA_DIR / 'sampled_handles.csv'
-    handles = storage.load_csv(handle_path)['handle'].tolist()
-    failed_handles = list()
-    success_count = 0
-    for handle in handles:
-        if not rating_change_fetcher.fetch_and_store(handle):
-            failed_handles.append(handle)
-        else:
-            success_count += 1
-            time.sleep(SLEEP_TIME)
-    for handle in failed_handles:
-        if rating_change_fetcher.fetch_and_store(handle):
-            success_count += 1
-            time.sleep(SLEEP_TIME)
-    print(f'Total {success_count}/{len(handles)} handles data stored.')
+    # handle_path = PROCESSED_DATA_DIR / 'sampled_handles.csv'
+    # handles = storage.load_csv(handle_path)['handle'].tolist()
+    # failed_handles = list()
+    # success_count = 0
+    # for handle in handles:
+    #     if not rating_change_fetcher.fetch_and_store(handle):
+    #         failed_handles.append(handle)
+    #     else:
+    #         success_count += 1
+    #         time.sleep(SLEEP_TIME)
+    # for handle in failed_handles:
+    #     if rating_change_fetcher.fetch_and_store(handle):
+    #         success_count += 1
+    #         time.sleep(SLEEP_TIME)
+    # print(f'Total {success_count}/{len(handles)} handles data stored.')
 
     pass
 

@@ -1,8 +1,8 @@
 import pandas as pd
 import time
 from api_client import get_rated_users_by_contest
-from cf_data_pipeline.storage import save_csv
-from cf_data_pipeline.config import PROCESSED_BASENAME, SLEEP_TIME
+from storage import save_csv
+from config import PROCESSED_BASENAME, SLEEP_TIME
 
 
 def extract_handles_from_contests(

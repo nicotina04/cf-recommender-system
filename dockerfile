@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-WORKDIR /app/cf_data_pipeline
 RUN ln -sf /usr/local/bin/python3 /usr/local/bin/python
 
-CMD ["python", "run_pipeline.py"]
+CMD ["python", "cf_data_pipeline/run_pipeline.py"]

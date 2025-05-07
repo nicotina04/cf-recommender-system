@@ -1,5 +1,5 @@
-from cf_data_pipeline.config import PROCESSED_DATA_DIR
-from cf_data_pipeline import storage
+from config import PROCESSED_DATA_DIR
+import storage
 
 
 def get_division_type(title: str) -> int:

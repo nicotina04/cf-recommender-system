@@ -1,14 +1,13 @@
 import time
-from cf_data_pipeline.api_client import get_contest_standings
-from cf_data_pipeline.contest_fetcher import get_rated_contest_df
-from cf_data_pipeline.preprocess import get_tag_group_map, normalize_tags
-from cf_data_pipeline.storage import save_json, load_json
-from cf_data_pipeline.config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME, SLEEP_TIME
+from api_client import get_contest_standings
+from contest_fetcher import get_rated_contest_df
+from preprocess import get_tag_group_map, normalize_tags
+from storage import save_json, load_json
+from config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME, SLEEP_TIME
 
 
 def process_contest_problem_metadata():
     contest_df = get_rated_contest_df()
-    tag_map = get_tag_group_map()
 
     records = []
     failed_ids = []
@@ -31,9 +30,10 @@ def process_contest_problem_metadata():
             record = {
                 "contest_id": contest_id,
                 "division_type": division,
-                "problem_index": i,
+                "problem_index_num": i,
+                "problem_index_raw": problem["index"],
                 "problem_rating": problem["rating"],
-                "tags": normalize_tags(problem.get('tags', []), tag_map)
+                "tags": problem.get('tags', []),
             }
             records.append(record)
 

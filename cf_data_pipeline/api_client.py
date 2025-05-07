@@ -3,7 +3,7 @@ import os
 import json
 import time
 from typing import Optional
-from cf_data_pipeline.config import *
+from config import *
 
 
 def get_json(url: str, api_timeout: float = 10) -> Optional[dict]:
@@ -31,7 +31,7 @@ def safe_get_json(url: str, api_timeout, max_retries=5):
             return None
     return None
 
-def get_contest_list(cache_path = f'./{RES_CACHE_BASENAME}/contest_list.json') -> Optional[dict]:
+def get_contest_list(cache_path = RES_CACHE_DATA_DIR / f'contest_list.json') -> Optional[dict]:
     if os.path.isfile(cache_path) is True:
         with open(cache_path, encoding='utf-8') as f:
             return json.load(f)
@@ -80,7 +80,7 @@ def get_contest_standings(contest_id: int, only_problems: bool) -> Optional[dict
     wait_time = 10
     if not only_problems:
         wait_time += 10
-    return get_json(url, api_timeout=wait_time)
+    return safe_get_json(url, api_timeout=wait_time)
 
 def get_rated_users_by_contest(contest_id: int) -> Optional[dict]:
     url = f'https://codeforces.com/api/user.ratedList?activeOnly=false&includeRetired=true&contestId={contest_id}'

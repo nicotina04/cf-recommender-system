@@ -1,9 +1,9 @@
 import pandas as pd
 from typing import Union
 from pathlib import Path
-from cf_data_pipeline import api_client
-from cf_data_pipeline.config import PROCESSED_DATA_DIR
-from cf_data_pipeline.storage import load_csv, save_csv
+import api_client
+from config import PROCESSED_DATA_DIR
+from storage import load_csv, save_csv
 
 
 def get_cf_handles(csv_path: Union[str, Path] = PROCESSED_DATA_DIR / f'selected_users.csv') -> list[str]:

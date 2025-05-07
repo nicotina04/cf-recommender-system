@@ -1,10 +1,10 @@
 import pandas as pd
 from datetime import datetime
 import time
-from cf_data_pipeline.api_client import get_contest_list, safe_get_json
-from cf_data_pipeline.storage import save_csv, load_csv
-from cf_data_pipeline.config import PROCESSED_DATA_DIR, RATED_CONTEST_METADATA_BASENAME, SLEEP_TIME
-from cf_data_pipeline.preprocess import get_division_type
+from api_client import get_contest_list, safe_get_json
+from storage import save_csv, load_csv
+from config import PROCESSED_DATA_DIR, RATED_CONTEST_METADATA_BASENAME, SLEEP_TIME
+from preprocess import get_division_type
 
 
 def process_rated_contest_csv(min_date: str, max_date: str):
