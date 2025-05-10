@@ -2,6 +2,13 @@ from typing import Optional
 from cf_data_pipeline import api_client, db_rating_change
 
 
+def get_contest_rating_changes(contest_id: int) -> Optional[dict]:
+    req_url = f'https://codeforces.com/api/contest.ratingChanges?contestId={contest_id}'
+    res = api_client.safe_get_json(req_url, 50)
+    if res is None or res['status'] != 'OK':
+        return None
+    return res
+
 def get_rating_changes(handle: str) -> Optional[dict]:
     req_url = f'https://codeforces.com/api/user.rating?handle={handle}'
     res = api_client.safe_get_json(req_url, 10)

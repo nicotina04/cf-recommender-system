@@ -72,16 +72,55 @@ def get_cf_rated_list_json(cache_path=f'./{RES_CACHE_BASENAME}/user.ratedList.js
         print(f'[EXCEPTION] {e}')
         return None
     
-def get_contest_standings(contest_id: int, only_problems: bool) -> Optional[dict]:
-    url = f'https://codeforces.com/api/contest.standings?contestId={contest_id}&asManager=false'
-    if only_problems:
-        url += '&from=1&count=1'
+def get_contest_standings(
+    contest_id: int,
+    from_index: Optional[int] = None,
+    count: Optional[int] = None,
+    handles: Optional[str] = None,
+    room: Optional[int] = None,
+    show_unofficial: bool = False,
+    participant_types: Optional[str] = None,
+    as_manager: bool = False,
+    only_problems: bool = False,
+) -> Optional[dict]:
+    base_url = f'https://codeforces.com/api/contest.standings?contestId={contest_id}&asManager={"true" if as_manager else "false"}'
+    
+    if from_index is not None:
+        base_url += f"&from={from_index}"
+    if count is not None:
+        base_url += f"&count={count}"
+    if handles:
+        base_url += f"&handles={handles}"
+    if room is not None:
+        base_url += f"&room={room}"
+    if show_unofficial is not None:
+        base_url += f"&showUnofficial={'true' if show_unofficial else 'false'}"
+    if participant_types:
+        base_url += f"&participantTypes={participant_types}"
 
     wait_time = 10
-    if not only_problems:
+    if only_problems:
+        if from_index is None:
+            base_url += "&from=1"
+        if count is None:
+            base_url += "&count=1"
+    else:
         wait_time += 10
-    return safe_get_json(url, api_timeout=wait_time)
+
+    return safe_get_json(base_url, api_timeout=wait_time)
 
 def get_rated_users_by_contest(contest_id: int) -> Optional[dict]:
     url = f'https://codeforces.com/api/user.ratedList?activeOnly=false&includeRetired=true&contestId={contest_id}'
-    return get_json(url, api_timeout=90)
+    return safe_get_json(url, api_timeout=90)
+
+def get_user_rating_changes(handle: str) -> Optional[dict]:
+    url = f'https://codeforces.com/api/user.rating?handle={handle}'
+    return safe_get_json(url, api_timeout=10)
+
+def get_contest_rating_changes(contest_id: int) -> Optional[dict]:
+    url = f'https://codeforces.com/api/contest.ratingChanges?contestId={contest_id}'
+    return safe_get_json(url, api_timeout=30)
+
+def get_user_status(handle: str) -> Optional[dict]:
+    url = f'https://codeforces.com/api/user.status?handle={handle}'
+    return safe_get_json(url, api_timeout=17)

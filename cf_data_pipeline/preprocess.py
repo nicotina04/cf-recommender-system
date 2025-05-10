@@ -2,6 +2,8 @@ from config import PROCESSED_DATA_DIR
 import storage
 
 
+problem_tags = None
+
 def get_division_type(title: str) -> int:
     title = title.lower()
     if 'hello' in title or 'good bye' in title or 'goodbye' in title:
@@ -17,6 +19,15 @@ def get_division_type(title: str) -> int:
     if 'div. 4' in title:
         return 4
     return 5  # special name (actually tag to div.1 + div.2)
+
+def get_tags():
+    if problem_tags is not None:
+        return problem_tags
+    
+    csv_path = PROCESSED_DATA_DIR / 'tags.csv'
+    df = storage.load_csv(csv_path)
+    problem_tags = set(df['tag'].tolist())
+    return problem_tags
 
 def get_tag_group_map():
     csv_path = PROCESSED_DATA_DIR / 'tag_group_map.csv'

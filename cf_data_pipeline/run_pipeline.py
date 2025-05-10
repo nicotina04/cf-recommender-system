@@ -4,7 +4,7 @@ from problem_fetcher import process_contest_problem_metadata, retry_failed_probl
 from user_selector import stratified_sample_by_rating
 from extract_participant_handles import extract_handles_from_contests
 import storage
-from config import PROCESSED_DATA_DIR, SLEEP_TIME
+from config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME
 
 def run_all():
     # print("Step 1: Fetching handles...")
@@ -13,8 +13,11 @@ def run_all():
     # print("Step 2: Fetching contest metadata...")
     # process_rated_contest_csv("2020-01-01", "2025-03-01")
 
-    print("Step 3: Fetching contest problem metadata...")
-    process_contest_problem_metadata()
+    # print("Step 3: Fetching contest problem metadata...")
+    # failed = process_contest_problem_metadata()
+    # meta_data_path = PROCESSED_DATA_DIR / f'{CONTEST_PROBLEMS_BASENAME}.json'
+    # retry_failed_problems(failed, meta_data_path, meta_data_path)
+    # print('Contest problem metadata fetching completed.')
 
     # Optional: retry logic (if you want to)
     # retry_failed_problems([1234, 5678], '...', '...')
@@ -65,6 +68,15 @@ def run_all():
     #         time.sleep(SLEEP_TIME)
     # print(f'Total {success_count}/{len(handles)} handles data stored.')
 
+    """Fetch contest data"""
+    import contest_standing_fetcher
+    print('Start fetching contest data...')
+    contest_standing_fetcher.process_contest_standings()
+    print('Contest data fetching completed.')
+
+    print('Start fetching user data from contest...')
+    contest_standing_fetcher.process_user_result()
+    print('User contest data fetching completed.')
     pass
 
 if __name__ == "__main__":

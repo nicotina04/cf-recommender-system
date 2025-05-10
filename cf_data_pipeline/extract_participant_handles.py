@@ -1,13 +1,15 @@
 import pandas as pd
 import time
+from typing import Union
+from pathlib import Path
 from api_client import get_rated_users_by_contest
 from storage import save_csv
-from config import PROCESSED_BASENAME, SLEEP_TIME
+from config import SLEEP_TIME, PROCESSED_DATA_DIR
 
 
 def extract_handles_from_contests(
     contest_ids: list[int],
-    save_csv_path: str = f'./{PROCESSED_BASENAME}/selected_handles.csv'
+    save_csv_path: Union[str, Path] = PROCESSED_DATA_DIR / 'selected_handles.csv'
 ) -> pd.DataFrame:
     records = list()
     seen = set()
