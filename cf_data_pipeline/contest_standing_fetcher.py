@@ -3,6 +3,7 @@ import pandas as pd
 from contest_fetcher import get_rated_contest_df
 import storage
 import api_client
+import db_contest_user_result
 from config import SLEEP_TIME, PROCESSED_DATA_DIR
 
 
@@ -33,6 +34,7 @@ def get_entity_from_rating_change(items: list[dict]) -> dict:
     std = (sum_of_variance / max((len(items) - unrated_count), 1)) ** 0.5
 
     entity = {
+        'contest_id': items[0]['contestId'],
         'avg_rating_all': avg_rating_all,
         'avg_rating_rated_only': avg_rated_only,
         'median_rating_rated': ratings[len(ratings) // 2] if len(ratings) > 0 else 0,
@@ -45,6 +47,26 @@ def get_entity_from_rating_change(items: list[dict]) -> dict:
     }
     return entity
 
+def get_records_from_contest_result(item: dict) -> list[tuple]:
+    problems = item['problems']
+    rows = item['rows']
+    contest_id = item['contest']['contestId']
+    records = list()
+
+    for row in rows:
+        handle = row['party']['members'][0]['handle']
+        results = row['problemResults']
+        for idx in range(len(results)):
+            item = results[idx]
+            record = (
+                handle,
+                contest_id,
+                idx,
+                problems[idx]['index'],
+                1 if item['points'] > 0 else 0
+            )
+            records.append(record)
+    return records
 
 def process_contest_standings():
     rated_contests = get_rated_contest_df()
@@ -82,9 +104,10 @@ def process_contest_standings():
     print(f'Failed contests: {total_failed}')
 
 def process_user_result():
+    db_contest_user_result.init_db()
+
     rated_contests = get_rated_contest_df()
     contests = rated_contests['contest_id'].tolist()
-    entity_list = list()
 
     for contest_id in contests:
         data = api_client.get_contest_standings(
@@ -100,22 +123,5 @@ def process_user_result():
             continue
 
         data = data['result']
-        problems = data['problems']
-        rows = data['rows']
-        for row in rows:
-            handle = row['party']['members'][0]['handle']
-            results = row['problemResults']
-
-            for idx in range(len(results)):
-                item = results[idx]
-                entity = {
-                    'contest_id': contest_id,
-                    'handle': handle,
-                }
-                entity['problem_index_num'] = idx
-                entity['problem_index_raw'] = problems[idx]['index']
-                entity['solved'] = 1 if item['points'] > 0 else 0
-                entity_list.append(entity)
-                print(entity)
-    df = pd.DataFrame(entity_list)
-    storage.save_csv(PROCESSED_DATA_DIR / 'contest_user_result.csv', df)
+        records = get_records_from_contest_result(data)
+        db_contest_user_result.insert_user_results(records)
