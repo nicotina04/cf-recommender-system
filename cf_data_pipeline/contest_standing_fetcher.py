@@ -50,7 +50,7 @@ def get_entity_from_rating_change(items: list[dict]) -> dict:
 def get_records_from_contest_result(item: dict) -> list[tuple]:
     problems = item['problems']
     rows = item['rows']
-    contest_id = item['contest']['contestId']
+    contest_id = item['contest']['id']
     records = list()
 
     for row in rows:
