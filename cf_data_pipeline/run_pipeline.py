@@ -70,9 +70,9 @@ def run_all():
 
     """Fetch contest data"""
     import contest_standing_fetcher
-    print('Start fetching contest data...')
-    contest_standing_fetcher.process_contest_standings()
-    print('Contest data fetching completed.')
+    # print('Start fetching contest data...')
+    # contest_standing_fetcher.process_contest_standings()
+    # print('Contest data fetching completed.')
 
     print('Start fetching user data from contest...')
     contest_standing_fetcher.process_user_result()
