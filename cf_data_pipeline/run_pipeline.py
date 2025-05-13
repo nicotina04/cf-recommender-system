@@ -3,6 +3,7 @@ from contest_fetcher import process_rated_contest_csv, get_rated_contest_df
 from problem_fetcher import process_contest_problem_metadata, retry_failed_problems
 from user_selector import stratified_sample_by_rating
 from extract_participant_handles import extract_handles_from_contests
+import build_dataset
 import storage
 from config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME
 
@@ -69,14 +70,15 @@ def run_all():
     # print(f'Total {success_count}/{len(handles)} handles data stored.')
 
     """Fetch contest data"""
-    import contest_standing_fetcher
+    # import contest_standing_fetcher
     # print('Start fetching contest data...')
     # contest_standing_fetcher.process_contest_standings()
     # print('Contest data fetching completed.')
 
-    print('Start fetching user data from contest...')
-    contest_standing_fetcher.process_user_result()
-    print('User contest data fetching completed.')
+    # print('Start fetching user data from contest...')
+    # contest_standing_fetcher.process_user_result()
+    # print('User contest data fetching completed.')
+    build_dataset.create_dataset(True)
     pass
 
 if __name__ == "__main__":

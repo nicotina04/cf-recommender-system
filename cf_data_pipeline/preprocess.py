@@ -1,8 +1,9 @@
-from config import PROCESSED_DATA_DIR
+from config import PROCESSED_DATA_DIR, DATA_PIPELINE_DIR
 import storage
 
 
-problem_tags = None
+_problem_tags_list: list = None
+_problem_tag_index_dict: dict = None
 
 def get_division_type(title: str) -> int:
     title = title.lower()
@@ -43,3 +44,23 @@ def normalize_tags(raw_tags: list[str], tag_map: dict[str, str]) -> list[str]:
             for group in tag_map[t].split(","):
                 tags.add(group)
     return list(tags)
+
+def get_problem_tag_list() -> list[str]:
+    global _problem_tags_list
+    if _problem_tags_list is None:
+        with open(DATA_PIPELINE_DIR / 'problem_tags.txt', 'r') as f:
+            _problem_tags_list = f.read().splitlines()
+
+    return _problem_tags_list
+
+def get_problem_tag_index_dict() -> dict[str, int]:
+    global _problem_tag_index_dict
+    if _problem_tag_index_dict is not None:
+        return _problem_tag_index_dict
+    
+    _problem_tag_index_dict = dict()
+    with open(PROCESSED_DATA_DIR / 'problem_tag_index.txt', 'r') as f:
+        lines = f.read().splitlines()
+        for i in range(len(lines)):
+            _problem_tag_index_dict[lines[i]] = i 
+    return _problem_tag_index_dict

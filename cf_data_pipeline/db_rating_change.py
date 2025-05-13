@@ -77,3 +77,14 @@ def get_recent_delta_avg(handle: str, pivot_contest_id: int, count: int = 5) -> 
         row = cursor.fetchone()
         delta_avg = row[0] if row[0] is not None else 0
         return int(delta_avg)
+    
+def get_max_rating_before_contest(handle: str, contest_id: int) -> int:
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.execute('''
+            SELECT MAX(new_rating), MAX(old_rating) FROM rating_changes WHERE handle = ? AND contest_id < ?
+        ''', (handle, contest_id))
+        row = cursor.fetchone()
+        rating = row[0] if row[0] is not None else 0
+        if row[1] is not None and row[1] > rating:
+            rating = row[1]
+        return rating
