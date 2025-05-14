@@ -204,7 +204,7 @@ def init_dataset_builder():
     load_and_init_contest_problem_data()
     load_contest_statistics()
 
-def create_dataset(normalize: bool):
+def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
     init_dataset_builder()
     db_path = db_contest_user_result.db_path
 
@@ -212,7 +212,7 @@ def create_dataset(normalize: bool):
     handles = df_handles['handle'].tolist()
 
     import random
-    random.seed(42)
+    random.seed(random_seed)
     random.shuffle(handles)
 
     # split list into 30 chunks
@@ -224,7 +224,7 @@ def create_dataset(normalize: bool):
     global recent_detla_avg_cache
     global max_rating_handle_cache
 
-    for i in range(len(handle_groups)):
+    for i in range(chunk_idx, len(handle_groups)):
         group = handle_groups[i]
         group_records = list()
         for handle in group:
