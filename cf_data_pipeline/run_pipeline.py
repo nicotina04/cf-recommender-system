@@ -78,7 +78,10 @@ def run_all():
     # print('Start fetching user data from contest...')
     # contest_standing_fetcher.process_user_result()
     # print('User contest data fetching completed.')
-    build_dataset.create_dataset(True)
+
+    print("Start building dataset...")
+    build_dataset.create_dataset(False)
+    print("Dataset building completed.")
     pass
 
 if __name__ == "__main__":

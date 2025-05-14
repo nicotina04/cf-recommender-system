@@ -63,7 +63,7 @@ def is_provisional_handle(handle: str) -> bool:
         count = cursor.fetchone()[0]
         return count < 5
     
-def get_recent_delta_avg(handle: str, pivot_contest_id: int, count: int = 5) -> int:
+def get_recent_delta_avg(handle: str, pivot_contest_id: int, count: int = 3) -> int:
     with sqlite3.connect(db_path) as conn:
         delta_qry = '''
             SELECT

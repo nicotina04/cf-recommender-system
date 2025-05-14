@@ -35,6 +35,8 @@ df_contest_statistics : pd.DataFrame = None
 contest_problem_data : defaultdict[tuple, ContestProblemData] = None
 problem_tag_list : list[str] = None
 handle_rating_cache: dict[tuple, dict[str, int]] = None
+max_rating_handle_cache = dict()
+recent_detla_avg_cache = dict()
 
 
 def load_contest_statistics():
@@ -109,6 +111,24 @@ def get_max_ac_rating_tags_before_contest(handle: str, contest_id: int) -> Optio
             ret[tag] = max(ret[tag], record.problem_rating)
     return ret
 
+def get_max_rating_before_contest(handle: str, contest_id: int) -> int:
+    global max_rating_handle_cache
+    if (handle, contest_id) in max_rating_handle_cache:
+        return max_rating_handle_cache[(handle, contest_id)]
+
+    rating = db_rating_change.get_max_rating_before_contest(handle, contest_id)
+    max_rating_handle_cache[(handle, contest_id)] = rating
+    return rating
+
+def get_recent_delta_avg(handle: str, contest_id: int) -> int:
+    global recent_detla_avg_cache
+    if (handle, contest_id) in recent_detla_avg_cache:
+        return recent_detla_avg_cache[(handle, contest_id)]
+
+    delta_avg = db_rating_change.get_recent_delta_avg(handle, contest_id)
+    recent_detla_avg_cache[(handle, contest_id)] = delta_avg
+    return delta_avg
+
 def get_dataset_record(sql_record, normalize: bool) -> dict:
     handle = sql_record[0]
     contest_id = sql_record[1]
@@ -119,13 +139,13 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     contest_data = get_contest_statistics(contest_id)
 
     record = dict()
-    record['max_rating_before_contest'] = db_rating_change.get_max_rating_before_contest(handle, contest_id)
-    record['recent_delta_avg'] = db_rating_change.get_recent_delta_avg(handle, contest_id)
+    record['max_rating_before_contest'] = get_max_rating_before_contest(handle, contest_id)
+    record['recent_delta_avg'] = get_recent_delta_avg(handle, contest_id)
     record['division_type'] = problem_data.division_type
     record['avg_rating_rated_only'] = contest_data.avg_rating_rated_only
     record['median_rating_rated'] = contest_data.median_rating_rated
-    record['percentile_rated_25th'] = contest_data.percentile_rated_25th
-    record['percentile_rated_75th'] = contest_data.percentile_rated_75th
+    record['25th_percentile_rated'] = contest_data.percentile_rated_25th
+    record['75th_percentile_rated'] = contest_data.percentile_rated_75th
     # record['std_rating_rated'] = contest_data.std_rating_rated
     record['count_total'] = contest_data.count_total
     record['count_unrated'] = contest_data.count_unrated
@@ -144,6 +164,7 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
         record[key_name] = 0
         if rating_max_tag is not None and tag in rating_max_tag:
             record[key_name] = rating_max_tag[tag]
+
             if normalize:
                 record[key_name] /= problem_maximum
                 record[key_name] = round(record[key_name], 3)
@@ -189,17 +210,39 @@ def create_dataset(normalize: bool):
 
     df_handles = storage.load_csv(config.SAMPLED_HANDLE_PATH)
     handles = df_handles['handle'].tolist()
+
+    import random
+    random.seed(42)
+    random.shuffle(handles)
+
+    # split list into 30 chunks
+    chunk_size = len(handles) // 30
+    handle_groups = [handles[i:i + chunk_size] for i in range(0, len(handles), chunk_size)]
+    print(f"[INFO] Total {len(handle_groups)} groups of handles, each group has {chunk_size} handles.")
+
     global handle_rating_cache
+    global recent_detla_avg_cache
+    global max_rating_handle_cache
 
-    for handle in handles:
-        with sqlite3.connect(db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM contest_user_result WHERE handle = ?', (handle,))
-            records = cursor.fetchall()
+    for i in range(len(handle_groups)):
+        group = handle_groups[i]
+        group_records = list()
+        for handle in group:
+            max_rating_handle_cache.clear()
+            recent_detla_avg_cache.clear()
 
-            if handle_rating_cache is not None:
-                handle_rating_cache.clear()
-                
-            for record in records:
-                dataset_record = get_dataset_record(record, normalize)
-                print(dataset_record)
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM contest_user_result WHERE handle = ?', (handle,))
+                records = cursor.fetchall()
+
+                if handle_rating_cache is not None:
+                    handle_rating_cache.clear()
+                    
+                for record in records:
+                    group_records.append(get_dataset_record(record, normalize))
+        dataset_name = f'dataset_group_{i}.csv'
+        dataset_path = config.DATASET_DIR / dataset_name
+        df = pd.DataFrame(group_records)
+        storage.save_csv(dataset_path, df)
+        print(f"[INFO] Dataset {i} saved to {dataset_path} with {len(group_records)} records.")
