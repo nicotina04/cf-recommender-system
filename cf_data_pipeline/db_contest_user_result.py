@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Optional
 import config
 
 db_path = config.PROCESSED_DATA_DIR / 'contest_user_result.db'
@@ -45,3 +46,21 @@ def insert_user_results(records: list):
             INSERT OR IGNORE INTO contest_user_result(handle, contest_id, problem_index_num, problem_index_raw, verdict)
             VALUES (?, ?, ?, ?, ?)''', records)
         conn.commit()
+
+def get_accepted_problems_before_contest(handle: str, contest_id: int) -> Optional[list]:
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.execute('''
+            SELECT contest_id, problem_index_num FROM contest_user_result WHERE handle = ? AND verdict = 1 AND contest_id < ?
+        ''', (handle, contest_id))
+        rows = cursor.fetchall()
+        return rows
+
+def get_verdict(handle: str, contest_id: int, problem_index_num: int) -> int:
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.execute('''
+            SELECT verdict FROM contest_user_result WHERE handle = ? AND contest_id = ? AND problem_index_num = ?
+        ''', (handle, contest_id, problem_index_num))
+        row = cursor.fetchone()
+        if row is not None:
+            return row[0]
+    return -1

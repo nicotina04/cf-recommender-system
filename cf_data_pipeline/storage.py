@@ -10,10 +10,11 @@ def save_json(path: Union[str, Path], data: dict):
     with path.open('w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-def load_json(path: Union[str, Path]) -> Optional[dict]:
+def load_json(path: Union[str, Path]) -> Optional[Union[dict, list]]:
     path = Path(path)
     
     if not path.is_file():
+        print(f'[load_json] File not found: {path}')
         return None
     
     try:
