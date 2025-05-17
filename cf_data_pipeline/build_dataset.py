@@ -8,6 +8,7 @@ import preprocess
 import config
 import db_rating_change
 import db_contest_user_result
+import problem_fetcher
 
 
 @dataclasses.dataclass
@@ -37,6 +38,7 @@ problem_tag_list : list[str] = None
 handle_rating_cache: dict[tuple, dict[str, int]] = None
 max_rating_handle_cache = dict()
 recent_detla_avg_cache = dict()
+ac_problems_by_handle: dict[str, Optional[list]] = dict()
 
 
 def load_contest_statistics():
@@ -46,6 +48,7 @@ def load_contest_statistics():
 
 def load_and_init_contest_problem_data():
     global contest_problem_data
+
     if contest_problem_data is not None:
         return
     
@@ -92,17 +95,42 @@ def get_contest_statistics(contest_id: int) -> Optional[ContestStatisticsData]:
 
 def get_problem_info(contest_id: int, problem_idx: int) -> Optional[ContestProblemData]:
     global contest_problem_data
-    load_and_init_contest_problem_data()
-    return contest_problem_data.get((contest_id, problem_idx), None)
+    ret = contest_problem_data.get((contest_id, problem_idx), None)
 
-def get_max_ac_rating_tags_before_contest(handle: str, contest_id: int) -> Optional[defaultdict]:
-    ac_list = db_contest_user_result.get_accepted_problems_before_contest(handle, contest_id)
-    if ac_list is None:
+    if ret is None:
+        path = config.CONTEST_PROBLEMS_DATA_PATH
+        problem_fetcher.retry_failed_problems([contest_id], path, path)
+        load_and_init_contest_problem_data()
+        ret = contest_problem_data.get((contest_id, problem_idx), None)
+
+    return ret
+
+def get_ac_problems_by_handle(handle: str):
+    global ac_problems_by_handle
+    if handle in ac_problems_by_handle:
+        return ac_problems_by_handle[handle]
+    
+    value = db_contest_user_result.get_accepted_problems_before_contest(handle, 10000)
+    if value is None:
         return None
     
+    value.sort(key=lambda x: (x[0], x[1]))
+    ac_problems_by_handle[handle] = value
+    return ac_problems_by_handle[handle]
+
+def get_max_ac_rating_tags_before_contest(handle: str, contest_id: int) -> Optional[defaultdict]:
+    ac_list = get_ac_problems_by_handle(handle)
+    if ac_list is None:
+        return None
+        
     ret = defaultdict(int)
+
     for item in ac_list:
         id, idx = item
+        
+        if id >= contest_id:
+            break
+
         record = get_problem_info(id, idx)
         if record is None:
             continue
@@ -138,6 +166,10 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     problem_data = get_problem_info(contest_id, problem_index_num)
     contest_data = get_contest_statistics(contest_id)
 
+    if problem_data is None:
+        print(f'[WARNING] contest data {contest_id} is not found')
+        return None
+    
     record = dict()
     record['max_rating_before_contest'] = get_max_rating_before_contest(handle, contest_id)
     record['recent_delta_avg'] = get_recent_delta_avg(handle, contest_id)
@@ -223,10 +255,14 @@ def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
     global handle_rating_cache
     global recent_detla_avg_cache
     global max_rating_handle_cache
+    global ac_problems_by_handle
 
     for i in range(chunk_idx, len(handle_groups)):
+        ac_problems_by_handle.clear()
+
         group = handle_groups[i]
         group_records = list()
+
         for handle in group:
             max_rating_handle_cache.clear()
             recent_detla_avg_cache.clear()
@@ -240,7 +276,11 @@ def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
                     handle_rating_cache.clear()
                     
                 for record in records:
-                    group_records.append(get_dataset_record(record, normalize))
+                    group_record = get_dataset_record(record, normalize)
+                    if group_record is not None:
+                        group_records.append(group_record)
+                print(f'[INFO] {handle} {len(records)} processed.')
+
         dataset_name = f'dataset_group_{i}.csv'
         dataset_path = config.DATASET_DIR / dataset_name
         df = pd.DataFrame(group_records)
