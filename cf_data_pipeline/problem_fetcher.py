@@ -44,9 +44,10 @@ def process_contest_problem_metadata():
     print(f"[Failed] {len(failed_ids)} contests")
     return failed_ids
 
-def retry_failed_problems(failed_ids: list[int], existing_json_path: str, save_json_path: str):
+def fetch_problems(failed_ids: list[int], existing_json_path: str, save_json_path: str) -> list:
     contest_df = get_rated_contest_df()
     division_lookup = contest_df.set_index('contest_id')['division_type'].to_dict()
+    failed_to_fetch = []
 
     existing = load_json(existing_json_path)
     if existing is None:
@@ -59,6 +60,7 @@ def retry_failed_problems(failed_ids: list[int], existing_json_path: str, save_j
         res = get_contest_standings(cid, only_problems=True)
         if res is None or res.get('status') != 'OK':
             print(f"[Retry Fail] Contest {cid}")
+            failed_to_fetch.append(cid)
             continue
 
         for i, problem in enumerate(res['result']['problems']):
@@ -81,3 +83,4 @@ def retry_failed_problems(failed_ids: list[int], existing_json_path: str, save_j
     all_records = existing + new_records
     save_json(save_json_path, all_records)
     print(f"[Retry Success] {len(new_records)} problems added.")
+    return failed_to_fetch

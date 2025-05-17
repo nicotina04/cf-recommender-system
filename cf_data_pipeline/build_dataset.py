@@ -39,6 +39,7 @@ handle_rating_cache: dict[tuple, dict[str, int]] = None
 max_rating_handle_cache = dict()
 recent_detla_avg_cache = dict()
 ac_problems_by_handle: dict[str, Optional[list]] = dict()
+contest_id_failed_fetch = set()
 
 
 def load_contest_statistics():
@@ -95,11 +96,18 @@ def get_contest_statistics(contest_id: int) -> Optional[ContestStatisticsData]:
 
 def get_problem_info(contest_id: int, problem_idx: int) -> Optional[ContestProblemData]:
     global contest_problem_data
+    global contest_id_failed_fetch
+
     ret = contest_problem_data.get((contest_id, problem_idx), None)
 
     if ret is None:
+        if contest_id in contest_id_failed_fetch:
+            return None
+
         path = config.CONTEST_PROBLEMS_DATA_PATH
-        problem_fetcher.retry_failed_problems([contest_id], path, path)
+        failed = problem_fetcher.fetch_problems([contest_id], path, path)
+        contest_id_failed_fetch |= set(failed)
+
         load_and_init_contest_problem_data()
         ret = contest_problem_data.get((contest_id, problem_idx), None)
 
