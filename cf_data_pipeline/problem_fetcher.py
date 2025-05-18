@@ -66,7 +66,8 @@ def fetch_problems(failed_ids: list[int], existing_json_path: str, save_json_pat
         for i, problem in enumerate(res['result']['problems']):
             if 'rating' not in problem:
                 print(f"[Skip] Contest {cid} / Problem {i} has no rating")
-                continue
+                failed_to_fetch.append(cid)
+                break
 
             record = {
                 "contest_id": cid,
