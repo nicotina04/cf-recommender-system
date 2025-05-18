@@ -1,6 +1,6 @@
 from user_fetcher import get_cf_handles
 from contest_fetcher import process_rated_contest_csv, get_rated_contest_df
-from problem_fetcher import process_contest_problem_metadata, retry_failed_problems
+from problem_fetcher import process_contest_problem_metadata, fetch_problems
 from user_selector import stratified_sample_by_rating
 from extract_participant_handles import extract_handles_from_contests
 import build_dataset

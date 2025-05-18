@@ -66,12 +66,13 @@ def is_provisional_handle(handle: str) -> bool:
 def get_recent_delta_avg(handle: str, pivot_contest_id: int, count: int = 3) -> int:
     with sqlite3.connect(db_path) as conn:
         delta_qry = '''
-            SELECT
-            AVG(new_rating - old_rating)
-            FROM rating_changes
-            WHERE handle = ? AND contest_id < ?
-            ORDER BY contest_id DESC
-            LIMIT ?
+            SELECT AVG(delta) FROM (
+                SELECT new_rating - old_rating AS delta
+                FROM rating_changes
+                WHERE handle = ? AND contest_id < ?
+                ORDER BY contest_id DESC
+                LIMIT ?
+            )
         '''
         cursor = conn.execute(delta_qry, (handle, pivot_contest_id, count))
         row = cursor.fetchone()
