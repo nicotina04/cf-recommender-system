@@ -6,17 +6,16 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.model_selection import train_test_split
 import utils
 
 
 def get_model(name: str, random_state: int = 42):
-    if name == 'RandomeForest':
-        return RandomForestClassifier(n_estimators=100, random_state=random_state, class_weight='balanced')
+    if name == 'RandomForest':
+        return RandomForestClassifier(n_estimators=75, random_state=random_state, class_weight='balanced')
     elif name == 'LogisticRegression':
-        return LogisticRegression(max_iter=1000, random_state=random_state, class_weight='balanced')
+        return LogisticRegression(max_iter=2000, random_state=random_state, class_weight='balanced')
     elif name == 'XGBoost':
-        return XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=random_state, scale_pos_weight=1)
+        return XGBClassifier(eval_metric='logloss', random_state=random_state, scale_pos_weight=1)
     elif name == 'LightGBM':
         return LGBMClassifier(random_state=random_state, class_weight='balanced')
     elif name == 'CatBoost':        
@@ -46,7 +45,7 @@ def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
     x_valid, y_valid = validset.drop(columns=['verdict']), validset['verdict']
     # x_test, y_test = testset.drop(columns=['verdict']), testset['verdict']
 
-    models = ['RandomeForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
+    models = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
     for model_name in models:
         print(f"Training {model_name}...")
         model = train_model(model_name, x_train, y_train, x_valid, y_valid, True)
