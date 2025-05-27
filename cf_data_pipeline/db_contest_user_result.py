@@ -1,5 +1,6 @@
 import sqlite3
 from typing import Optional
+from collections import defaultdict
 import config
 
 db_path = config.PROCESSED_DATA_DIR / 'contest_user_result.db'
@@ -54,6 +55,22 @@ def get_accepted_problems_before_contest(handle: str, contest_id: int) -> Option
         ''', (handle, contest_id))
         rows = cursor.fetchall()
         return rows
+    
+def get_all_ac_submission() -> Optional[defaultdict]:
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.execute('''
+            SELECT handle, contest_id, problem_index_num FROM contest_user_result WHERE verdict = 1
+        ''')
+        rows = cursor.fetchall()
+
+        ret = defaultdict(list)
+        for handle, contest_id, problem_index_num in rows:
+            ret[handle].append((contest_id, problem_index_num))
+
+        for ac_list in ret.values():
+            ac_list.sort()
+
+        return ret
 
 def get_verdict(handle: str, contest_id: int, problem_index_num: int) -> int:
     with sqlite3.connect(db_path) as conn:

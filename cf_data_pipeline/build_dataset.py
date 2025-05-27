@@ -40,6 +40,7 @@ max_rating_handle_cache = dict()
 recent_detla_avg_cache = dict()
 ac_problems_by_handle: dict[str, Optional[list]] = dict()
 contest_id_failed_fetch = set()
+handle_ac_submission_cache: Optional[defaultdict] = None
 
 
 def load_contest_statistics():
@@ -114,17 +115,11 @@ def get_problem_info(contest_id: int, problem_idx: int) -> Optional[ContestProbl
     return ret
 
 def get_ac_problems_by_handle(handle: str):
-    global ac_problems_by_handle
-    if handle in ac_problems_by_handle:
-        return ac_problems_by_handle[handle]
-    
-    value = db_contest_user_result.get_accepted_problems_before_contest(handle, 10000)
-    if value is None:
+    global handle_ac_submission_cache
+    if handle in handle_ac_submission_cache:
+        return handle_ac_submission_cache[handle]
+    else:
         return None
-    
-    value.sort(key=lambda x: (x[0], x[1]))
-    ac_problems_by_handle[handle] = value
-    return ac_problems_by_handle[handle]
 
 def get_max_ac_rating_tags_before_contest(handle: str, contest_id: int) -> Optional[defaultdict]:
     ac_list = get_ac_problems_by_handle(handle)
@@ -179,9 +174,12 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
         return None
     
     record = dict()
+    record['contest_id'] = contest_id
+    record['division_type'] = problem_data.division_type
+    record['problem_index'] = problem_index_num
+    record['handle'] = handle
     record['max_rating_before_contest'] = get_max_rating_before_contest(handle, contest_id)
     record['recent_delta_avg'] = get_recent_delta_avg(handle, contest_id)
-    record['division_type'] = problem_data.division_type
     record['avg_rating_rated_only'] = contest_data.avg_rating_rated_only
     record['median_rating_rated'] = contest_data.median_rating_rated
     record['25th_percentile_rated'] = contest_data.percentile_rated_25th
@@ -190,7 +188,6 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     record['count_total'] = contest_data.count_total
     record['count_unrated'] = contest_data.count_unrated
     record['unrated_ratio'] = contest_data.unrated_ratio
-    record['problem_index'] = problem_index_num
 
     rating_max_tag = get_max_ac_rating_tags_before_contest(handle, contest_id)
 
@@ -234,7 +231,7 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     return record
 
 def init_dataset_builder():
-    global problem_tag_list
+    global problem_tag_list, handle_ac_submission_cache
     problem_tag_list = preprocess.get_problem_tag_list()
     tag_index = dict()
 
@@ -243,6 +240,7 @@ def init_dataset_builder():
 
     load_and_init_contest_problem_data()
     load_contest_statistics()
+    handle_ac_submission_cache = db_contest_user_result.get_all_ac_submission()
 
 def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
     init_dataset_builder()
