@@ -11,9 +11,9 @@ import utils
 
 def get_model(name: str, random_state: int = 42):
     if name == 'RandomForest':
-        return RandomForestClassifier(n_estimators=75, random_state=random_state, class_weight='balanced')
+        return RandomForestClassifier(n_estimators=80, random_state=random_state, class_weight='balanced')
     elif name == 'LogisticRegression':
-        return LogisticRegression(max_iter=2000, random_state=random_state, class_weight='balanced')
+        return LogisticRegression(max_iter=1500, random_state=random_state, class_weight='balanced')
     elif name == 'XGBoost':
         return XGBClassifier(eval_metric='logloss', random_state=random_state, scale_pos_weight=1)
     elif name == 'LightGBM':
@@ -38,14 +38,12 @@ def train_model(model_name: str, x_train, y_train, x_valid=None, y_valid=None, u
 def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
     os.makedirs(save_dir, exist_ok=True)
     trainset, validset, testset = utils.split_by_contest(df, test_ratio=0.1, valid_ratio=0.1)
-    trainset = utils.filter_dataframe(trainset)
-    validset = utils.filter_dataframe(validset)
-    testset = utils.filter_dataframe(testset)
     x_train, y_train = trainset.drop(columns=['verdict']), trainset['verdict']
     x_valid, y_valid = validset.drop(columns=['verdict']), validset['verdict']
     # x_test, y_test = testset.drop(columns=['verdict']), testset['verdict']
 
     models = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
+    # models = ['LogisticRegression']
     for model_name in models:
         print(f"Training {model_name}...")
         model = train_model(model_name, x_train, y_train, x_valid, y_valid, True)

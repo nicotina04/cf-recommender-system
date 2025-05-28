@@ -178,6 +178,12 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     record['division_type'] = problem_data.division_type
     record['problem_index'] = problem_index_num
     record['handle'] = handle
+
+    current_rating = db_rating_change.get_contest_rating_entity(handle, contest_id)
+    if current_rating is None:
+        print(f'[WARNING] before rating for {handle} {contest_id} is not found')
+        return None
+    record['current_rating_before_contest'] = current_rating.old_rating
     record['max_rating_before_contest'] = get_max_rating_before_contest(handle, contest_id)
     record['recent_delta_avg'] = get_recent_delta_avg(handle, contest_id)
     record['avg_rating_rated_only'] = contest_data.avg_rating_rated_only
@@ -292,3 +298,55 @@ def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
         df = pd.DataFrame(group_records)
         storage.save_csv(dataset_path, df)
         print(f"[INFO] Dataset {i} saved to {dataset_path} with {len(group_records)} records.")
+
+def insert_current_rating_before_contest():
+    import glob
+    import os 
+
+    dataset_files = glob.glob(os.path.join(config.DATASET_DIR, 'dataset_group_*.csv'))
+    for file in dataset_files:
+        print(f'Processing {file}...')
+        df = pd.read_csv(file)
+
+        def get_old_rating(row):
+            ent = db_rating_change.get_contest_rating_entity(row['handle'], int(row['contest_id']))
+            return ent.old_rating if ent is not None else None
+
+        df['current_rating_before_contest'] = df.apply(get_old_rating, axis=1)
+        
+        # Save the updated DataFrame back to the file
+        df.to_csv(file, index=False)
+        print(f'Updated {file} with current ratings.')
+
+def fix_and_update_current_rating_before_contest():
+    import glob
+    import os
+    import pandas as pd
+
+    dataset_files = glob.glob(os.path.join(config.DATASET_DIR, 'dataset_group_*.csv'))
+
+    for file in dataset_files:
+        print(f'Processing {file}...')
+        df = pd.read_csv(file)
+
+        if 'currnet_rating_before_contest' in df.columns:
+            df.drop(columns=['currnet_rating_before_contest'], inplace=True)
+
+        def get_old_rating(row):
+            ent = db_rating_change.get_contest_rating_entity(row['handle'], int(row['contest_id']))
+            return ent.old_rating if ent is not None else None
+
+        df['current_rating_before_contest'] = df.apply(get_old_rating, axis=1)
+
+        before_count = len(df)
+        df = df.dropna(subset=['current_rating_before_contest'])
+        after_count = len(df)
+
+        df['current_rating_before_contest'] = df['current_rating_before_contest'].astype(int)
+        print(f' - {before_count - after_count} rows dropped due to missing rating')
+
+        df.to_csv(file, index=False)
+        print(f'Updated {file} with current ratings.')
+
+if __name__ == "__main__":
+    fix_and_update_current_rating_before_contest()

@@ -27,7 +27,6 @@ def evaluate_model(model_name: str, x_test, y_test, model_dir: str = 'models'):
 
 def analyze_all_models(df: pd.DataFrame, model_names, model_dir: str = 'models'):
     _, _, testset = utils.split_by_contest(df, test_ratio=0.1, valid_ratio=0.1)
-    testset = utils.filter_dataframe(testset)
     x_test, y_test = testset.drop(columns=['verdict']), testset['verdict']
 
     plt.figure(figsize=(8, 6))
@@ -40,6 +39,7 @@ def analyze_all_models(df: pd.DataFrame, model_names, model_dir: str = 'models')
     plt.title('Calibration Curve for All Models')
     plt.grid(True)
     plt.tight_layout()
+    plt.legend()
     plt.show()
 
 def plot_feature_importance(model, feature_names, top_n=20):
@@ -62,4 +62,5 @@ def plot_feature_importance(model, feature_names, top_n=20):
 if __name__ == "__main__":
     df = utils.load_and_merge_datasets('dataset')
     model_list = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
+    # model_list = ['LogisticRegression']  # For testing, use only one model
     analyze_all_models(df, model_list)
