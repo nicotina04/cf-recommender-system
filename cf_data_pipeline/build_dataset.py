@@ -7,6 +7,7 @@ import storage
 import preprocess
 import config
 import db_rating_change
+import rating_change_fetcher
 import db_contest_user_result
 import problem_fetcher
 
@@ -160,7 +161,7 @@ def get_recent_delta_avg(handle: str, contest_id: int) -> int:
     recent_detla_avg_cache[(handle, contest_id)] = delta_avg
     return delta_avg
 
-def get_dataset_record(sql_record, normalize: bool) -> dict:
+def get_dataset_record(sql_record) -> dict:
     handle = sql_record[0]
     contest_id = sql_record[1]
     problem_index_num = sql_record[2]
@@ -180,8 +181,15 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
     record['handle'] = handle
 
     current_rating = db_rating_change.get_contest_rating_entity(handle, contest_id)
+    # fetch rating cheanges
     if current_rating is None:
-        print(f'[WARNING] before rating for {handle} {contest_id} is not found')
+        if not rating_change_fetcher.fetch_and_store(handle):
+            print(f'[WARNING] before rating for {handle} {contest_id} is not found')
+            return None
+        else:
+            current_rating = db_rating_change.get_contest_rating_entity(handle, contest_id)
+
+    if current_rating is None:
         return None
     record['current_rating_before_contest'] = current_rating.old_rating
     record['max_rating_before_contest'] = get_max_rating_before_contest(handle, contest_id)
@@ -197,9 +205,6 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
 
     rating_max_tag = get_max_ac_rating_tags_before_contest(handle, contest_id)
 
-    rating_pivot = 4500
-    problem_maximum = 3500
-
     global problem_tag_list
 
     for tag in problem_tag_list:
@@ -207,10 +212,6 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
         record[key_name] = 0
         if rating_max_tag is not None and tag in rating_max_tag:
             record[key_name] = rating_max_tag[tag]
-
-            if normalize:
-                record[key_name] /= problem_maximum
-                record[key_name] = round(record[key_name], 3)
 
     for tag in problem_tag_list:
         key_name = f'problem_tag_{tag}'
@@ -220,20 +221,6 @@ def get_dataset_record(sql_record, normalize: bool) -> dict:
             record[key_name] = 0
 
     record['verdict'] = verdict
-
-    if normalize:
-        record['max_rating_before_contest'] /= rating_pivot
-        record['max_rating_before_contest'] = round(record['max_rating_before_contest'], 3)
-        record['recent_delta_avg'] /= rating_pivot
-        record['recent_delta_avg'] = round(record['recent_delta_avg'], 3)
-        record['avg_rating_rated_only'] /= rating_pivot
-        record['avg_rating_rated_only'] = round(record['avg_rating_rated_only'], 3)
-        record['median_rating_rated'] /= rating_pivot
-        record['median_rating_rated'] = round(record['median_rating_rated'], 3)
-        record['percentile_rated_25th'] /= rating_pivot
-        record['percentile_rated_25th'] = round(record['percentile_rated_25th'], 3)
-        record['percentile_rated_75th'] /= rating_pivot
-        record['percentile_rated_75th'] = round(record['percentile_rated_75th'], 3)
     return record
 
 def init_dataset_builder():
@@ -288,7 +275,7 @@ def create_dataset(normalize: bool, chunk_idx: int = 0, random_seed: int = 42):
                     handle_rating_cache.clear()
                     
                 for record in records:
-                    group_record = get_dataset_record(record, normalize)
+                    group_record = get_dataset_record(record)
                     if group_record is not None:
                         group_records.append(group_record)
                 print(f'[INFO] {handle} {len(records)} processed.')

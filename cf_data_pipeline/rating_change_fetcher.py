@@ -1,5 +1,5 @@
 from typing import Optional
-from cf_data_pipeline import api_client, db_rating_change
+import api_client, db_rating_change
 
 
 def get_contest_rating_changes(contest_id: int) -> Optional[dict]:
