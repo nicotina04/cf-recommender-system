@@ -37,8 +37,8 @@ def load_and_merge_datasets(dir_path: str, pattern: str = 'dataset_group_*.csv')
     return merged_df
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type', 
-                 '25th_percentile_rated', '75th_percentile_rated']
+    drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type', 'count_unrated', 
+                'unrated_ratio']
     mx_rating_key = 'max_rating_before_contest'
     filtered_df = df
     # filtered_df = df[df[mx_rating_key] > 0]
@@ -47,8 +47,8 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 def scale_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
-        if 'max_rating_before_contest' in col or 'currnet_rating_before_contest' in col:
-            df[col] = min_max_scale_custom(df[col], -100, 4500)
+        if 'max_rating_before_contest' in col or 'currnet_rating_before_contest' in col or 'percentile_rated' in col:
+            df[col] = min_max_scale_custom(df[col], -100, 4200)
         elif 'rating' in col:
             df[col] = min_max_scale_custom(df[col], 800, 3500)
 
