@@ -5,3 +5,6 @@ xgboost
 lightgbm
 catboost
 matplotlib
+onnx
+onnxmltools
+skl2onnx

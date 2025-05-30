@@ -23,7 +23,7 @@ def get_model(name: str, random_state: int = 42):
     else:
         raise ValueError(f"Unknown model name: {name}")
 
-def train_model(model_name: str, x_train, y_train, x_valid=None, y_valid=None, use_calibration=True):
+def train_model(model_name: str, x_train, y_train, x_valid=None, y_valid=None, use_calibration=False):
     model = get_model(model_name)
     model.fit(x_train, y_train)
 
@@ -46,7 +46,7 @@ def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
     # models = ['LogisticRegression']
     for model_name in models:
         print(f"Training {model_name}...")
-        model = train_model(model_name, x_train, y_train, x_valid, y_valid, True)
+        model = train_model(model_name, x_train, y_train, x_valid, y_valid)
         model_path = os.path.join(save_dir, f"{model_name}.pkl")
         with open(model_path, 'wb') as f:
             import joblib

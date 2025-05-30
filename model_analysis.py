@@ -10,6 +10,35 @@ import utils
 
 normalize_target_columns: set = None
 
+def expected_calibration_error(y_true, y_prob, n_bins=10):
+    bins = np.linspace(0, 1, n_bins + 1)
+    binids = np.digitize(y_prob, bins) - 1
+    ece = 0
+    for i in range(n_bins):
+        bin_mask = binids == i
+        if np.any(bin_mask):
+            acc = np.mean(y_true[bin_mask])
+            conf = np.mean(y_prob[bin_mask])
+            ece += np.sum(bin_mask) * np.abs(acc - conf)
+    return ece / len(y_true)
+
+def adaptive_calibration_error(y_true, y_prob, n_bins=10):
+    y_true = np.asarray(y_true)
+    y_prob = np.asarray(y_prob)
+
+    sorted_indices = np.argsort(y_prob)
+    y_true_sorted = y_true[sorted_indices]
+    y_prob_sorted = y_prob[sorted_indices]
+    bin_size = int(np.ceil(len(y_true) / n_bins))
+    errors = []
+    for i in range(n_bins):
+        start = i * bin_size
+        end = min((i + 1) * bin_size, len(y_true))
+        if end > start:
+            acc = np.mean(y_true_sorted[start:end])
+            conf = np.mean(y_prob_sorted[start:end])
+            errors.append(abs(acc - conf))
+    return np.mean(errors)
 
 def evaluate_model(model_name: str, x_test, y_test, model_dir: str = 'models'):
     model_path = os.path.join(model_dir, f'{model_name}.pkl')
@@ -19,8 +48,10 @@ def evaluate_model(model_name: str, x_test, y_test, model_dir: str = 'models'):
 
     acc = accuracy_score(y_test, y_pred)
     brier_score = brier_score_loss(y_test, y_prob)
+    ece = expected_calibration_error(y_test, y_prob)
+    ace = adaptive_calibration_error(y_test, y_prob)
 
-    print(f'Model name: {model_name} - Accuracy: {acc:.4f}, Brier Score: {brier_score:.4f}')
+    print(f'Model name: {model_name} - Accuracy: {acc:.4f}, Brier Score: {brier_score:.4f} - ECE: {ece:.4f} - ACE: {ace:.4f}')
 
     prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     return prob_pred, prob_true
