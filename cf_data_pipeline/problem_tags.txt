@@ -3,7 +3,7 @@ math
 greedy
 dp
 data structures
-brute
+brute force
 constructive algorithms
 graphs
 sortings

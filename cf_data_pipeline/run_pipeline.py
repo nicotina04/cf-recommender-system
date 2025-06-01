@@ -80,7 +80,7 @@ def run_all():
     # print('User contest data fetching completed.')
 
     print("Start building dataset...")
-    build_dataset.create_dataset(False, 11)
+    build_dataset.create_dataset(False)
     print("Dataset building completed.")
     pass
 
