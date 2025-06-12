@@ -37,11 +37,12 @@ def load_and_merge_datasets(dir_path: str, pattern: str = 'dataset_group_*.csv')
     return merged_df
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type', 'count_unrated', 
-                'unrated_ratio']
+    drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type']
     mx_rating_key = 'max_rating_before_contest'
+    limit_rating_scaled = min_max_scale_custom(2100, -100, 4200)
+
     filtered_df = df
-    # filtered_df = df[df[mx_rating_key] > 0]
+    # filtered_df = df[df[mx_rating_key] > limit_rating_scaled]
     filtered_df = filtered_df.drop(columns=drop_cols, axis=1)
     return filtered_df
 

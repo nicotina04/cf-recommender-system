@@ -5,6 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
+from sklearn.frozen import FrozenEstimator
 from sklearn.calibration import CalibratedClassifierCV
 import utils
 
@@ -29,7 +30,8 @@ def train_model(model_name: str, x_train, y_train, x_valid=None, y_valid=None, u
 
     if use_calibration and x_valid is not None and y_valid is not None:
         try:
-            model = CalibratedClassifierCV(model, method='isotonic', cv=5)
+            frozen_model = FrozenEstimator(model)
+            model = CalibratedClassifierCV(estimator=frozen_model, method='isotonic', cv='prefit', ensemble=False)
             model.fit(x_valid, y_valid)
         except Exception as e:
             print(f"Calibration failed: {e}")
@@ -46,7 +48,7 @@ def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
     # models = ['LogisticRegression']
     for model_name in models:
         print(f"Training {model_name}...")
-        model = train_model(model_name, x_train, y_train, x_valid, y_valid)
+        model = train_model(model_name, x_train, y_train, x_valid, y_valid, True)
         model_path = os.path.join(save_dir, f"{model_name}.pkl")
         with open(model_path, 'wb') as f:
             import joblib
