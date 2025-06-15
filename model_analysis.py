@@ -56,7 +56,7 @@ def evaluate_model(model_name: str, x_test, y_test, model_dir: str = 'models'):
     prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
     return prob_pred, prob_true
 
-def analyze_all_models(df: pd.DataFrame, model_names, model_dir: str = 'models'):
+def analyze_all_models(df: pd.DataFrame, model_names, model_dir: str = 'models', title_suffix: str = ''):
     _, _, testset = utils.split_by_contest(df, test_ratio=0.1, valid_ratio=0.1)
     x_test, y_test = testset.drop(columns=['verdict']), testset['verdict']
 
@@ -67,7 +67,10 @@ def analyze_all_models(df: pd.DataFrame, model_names, model_dir: str = 'models')
     plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Perfect calibration')
     plt.xlabel('Predicted Probability')
     plt.ylabel('True Probability')
-    plt.title('Calibration Curve for All Models(Calibrated)')
+    title = f'Calibration Curve for All Models'
+    if title_suffix:
+        title += f' - {title_suffix}'
+    plt.title(title)
     plt.grid(True)
     plt.tight_layout()
     plt.legend()
@@ -93,5 +96,4 @@ def plot_feature_importance(model, feature_names, top_n=20):
 if __name__ == "__main__":
     df = utils.load_and_merge_datasets('dataset')
     model_list = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
-    # model_list = ['LogisticRegression']  # For testing, use only one model
     analyze_all_models(df, model_list)
