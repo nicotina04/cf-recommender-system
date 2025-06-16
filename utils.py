@@ -38,6 +38,7 @@ def load_and_merge_datasets(dir_path: str, pattern: str = 'dataset_group_*.csv')
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type']
+    drop_cols.extend(['25th_percentile_rated', '75th_percentile_rated', 'count_unrated', 'median_rating_rated'])
     mx_rating_key = 'max_rating_before_contest'
     limit_rating_scaled = min_max_scale_custom(2100, -100, 4200)
 

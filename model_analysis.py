@@ -96,4 +96,4 @@ def plot_feature_importance(model, feature_names, top_n=20):
 if __name__ == "__main__":
     df = utils.load_and_merge_datasets('dataset')
     model_list = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
-    analyze_all_models(df, model_list)
+    analyze_all_models(df, model_list, title_suffix='Dieted features')
