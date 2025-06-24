@@ -44,6 +44,10 @@ def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
     x_valid, y_valid = validset.drop(columns=['verdict']), validset['verdict']
     # x_test, y_test = testset.drop(columns=['verdict']), testset['verdict']
 
+    with open('models/feature_names.txt', 'w') as f:
+        for col in x_train.columns:
+            f.write(f"{col}\n")
+
     models = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
     # models = ['LogisticRegression']
     for model_name in models:
