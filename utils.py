@@ -2,14 +2,23 @@ import pandas as pd
 import os
 import glob
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 
 normalize_target_columns: set = None
 
 
-def min_max_scale_custom(series: pd.Series, min_value, max_value) -> pd.Series:
-    return (series - min_value) / (max_value - min_value)
+def min_max_scale_series(series: pd.Series, min_value, max_value) -> pd.Series:
+    return series.clip(lower=min_value, upper=max_value).apply(
+        lambda x: (x - min_value) / (max_value - min_value)
+    )
+
+def min_max_scale_value(value, min_value, max_value) -> float:
+    if value < min_value:
+        return 0.0
+    elif value > max_value:
+        return 1.0
+    else:
+        return (value - min_value) / (max_value - min_value)
 
 def get_normalize_target_columns():
     global normalize_target_columns
@@ -37,12 +46,15 @@ def load_and_merge_datasets(dir_path: str, pattern: str = 'dataset_group_*.csv')
     return merged_df
 
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    drop_cols = ['handle', 'contest_id', 'problem_index', 'division_type']
-    drop_cols.extend(['25th_percentile_rated', '75th_percentile_rated', 'count_unrated', 'median_rating_rated'])
-    mx_rating_key = 'max_rating_before_contest'
-    limit_rating_scaled = min_max_scale_custom(2100, -100, 4200)
+    drop_cols = ['handle', 'contest_id', 'problem_index']
+    drop_cols.extend(['25th_percentile_rated', '75th_percentile_rated', 'count_unrated', 'unrated_ratio', 'median_rating_rated', 'avg_rating_rated_only', 'count_total'])
 
+    # pattern_cols = [col for col in df.columns if col.startswith('accepted_max') or col.startswith('problem_tag_')]
+    # drop_cols.extend(pattern_cols)
+    mx_rating_key = 'max_rating_before_contest'
+    
     filtered_df = df
+    limit_rating_scaled = min_max_scale_value(2100, 0, 4000)
     # filtered_df = df[df[mx_rating_key] > limit_rating_scaled]
     filtered_df = filtered_df.drop(columns=drop_cols, axis=1)
     return filtered_df
@@ -50,9 +62,9 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 def scale_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         if 'max_rating_before_contest' in col or 'currnet_rating_before_contest' in col or 'percentile_rated' in col:
-            df[col] = min_max_scale_custom(df[col], -100, 4200)
+            df[col] = min_max_scale_series(df[col], 0, 4000)
         elif 'rating' in col:
-            df[col] = min_max_scale_custom(df[col], 800, 3500)
+            df[col] = min_max_scale_series(df[col], 800, 3500)
 
     return df
 

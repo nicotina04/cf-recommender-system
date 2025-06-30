@@ -5,7 +5,7 @@ from user_selector import stratified_sample_by_rating
 from extract_participant_handles import extract_handles_from_contests
 import build_dataset
 import storage
-from config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME
+from config import PROCESSED_DATA_DIR, CONTEST_PROBLEMS_BASENAME, DATASET_DIR
 
 def run_all():
     # print("Step 1: Fetching handles...")
@@ -79,9 +79,25 @@ def run_all():
     # contest_standing_fetcher.process_user_result()
     # print('User contest data fetching completed.')
 
+    """Build dataset"""
     print("Start building dataset...")
-    build_dataset.create_dataset(False)
+    build_dataset.create_dataset(False, 23)
     print("Dataset building completed.")
+
+    """Modify dataset"""
+    # import os
+    # import glob
+    # pat = 'dataset_group_*.csv'
+    # paths = os.path.join(DATASET_DIR, pat)
+    # files = glob.glob(paths)
+    # for file in files:
+    #     print(f"Processing file: {file}")
+    #     df = storage.load_csv(file)
+    #     df = build_dataset.filter_dataframe(df)
+    #     df = build_dataset.scale_dataframe(df)
+    #     save_path = os.path.join(DATASET_DIR, 'modified_' + os.path.basename(file))
+    #     storage.save_csv(save_path, df)
+    #     print(f"Modified dataset saved to: {save_path}")
     pass
 
 if __name__ == "__main__":

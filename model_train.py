@@ -49,10 +49,10 @@ def train_and_save_all_models(df: pd.DataFrame, save_dir='models'):
             f.write(f"{col}\n")
 
     models = ['RandomForest', 'LogisticRegression', 'XGBoost', 'LightGBM', 'CatBoost']
-    # models = ['LogisticRegression']
+    models = ['XGBoost']
     for model_name in models:
         print(f"Training {model_name}...")
-        model = train_model(model_name, x_train, y_train, x_valid, y_valid, True)
+        model = train_model(model_name, x_train, y_train, x_valid, y_valid, False)
         model_path = os.path.join(save_dir, f"{model_name}.pkl")
         with open(model_path, 'wb') as f:
             import joblib

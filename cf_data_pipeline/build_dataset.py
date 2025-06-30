@@ -178,6 +178,7 @@ def get_dataset_record(sql_record) -> dict:
     record['contest_id'] = contest_id
     record['division_type'] = problem_data.division_type
     record['problem_index'] = problem_index_num
+    record['problem_rating'] = problem_data.problem_rating
     record['handle'] = handle
 
     current_rating = db_rating_change.get_contest_rating_entity(handle, contest_id)
@@ -335,5 +336,37 @@ def fix_and_update_current_rating_before_contest():
         df.to_csv(file, index=False)
         print(f'Updated {file} with current ratings.')
 
+def insert_problem_rating():
+    import glob
+    import os
+    import pandas as pd
+
+    dataset_files = glob.glob(os.path.join(config.DATASET_DIR, 'dataset_group_*.csv'))
+
+    for file in dataset_files:
+        print(f'Processing {file}...')
+        df = pd.read_csv(file)
+
+        def get_rating(row):
+            contest_id = int(row['contest_id'])
+            problem_index = int(row['problem_index'])
+            problem_data = get_problem_info(contest_id, problem_index)
+            if problem_data is None:
+                print(f'[WARNING] Problem data for contest {contest_id}, index {problem_index} not found.')
+                return None
+            return problem_data.problem_rating
+
+        df['problem_rating'] = df.apply(get_rating, axis=1)
+        df.dropna(subset=['problem_rating'], inplace=True)
+        df['problem_rating'] = df['problem_rating'].astype(int)
+        
+        cols = list(df.columns)
+        cols.remove('problem_rating')
+        cols.insert(3, 'problem_rating')
+        df = df[cols]
+
+        df.to_csv(file, index=False)
+
 if __name__ == "__main__":
-    fix_and_update_current_rating_before_contest()
+    load_and_init_contest_problem_data()
+    insert_problem_rating()
